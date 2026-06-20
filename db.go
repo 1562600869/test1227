@@ -60,24 +60,24 @@ func InitDB(dbPath string) error {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			nick TEXT NOT NULL,
 			phone TEXT NOT NULL,
-			belt TEXT NOT NULL DEFAULT '白',
-			status TEXT NOT NULL DEFAULT '在籍'
+			belt TEXT NOT NULL DEFAULT '白' CHECK (belt IN ('白','黄','橙','绿','蓝','红','黑')),
+			status TEXT NOT NULL DEFAULT '在籍' CHECK (status IN ('在籍','停训','退出'))
 		);
 		CREATE TABLE IF NOT EXISTS training_records (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			student_id INTEGER NOT NULL,
 			date TEXT NOT NULL,
-			type TEXT NOT NULL,
-			duration INTEGER NOT NULL,
+			type TEXT NOT NULL CHECK (type IN ('基础','对练','体能','套路')),
+			duration INTEGER NOT NULL CHECK (duration > 0),
 			FOREIGN KEY (student_id) REFERENCES students(id)
 		);
 		CREATE TABLE IF NOT EXISTS exam_records (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			student_id INTEGER NOT NULL,
 			date TEXT NOT NULL,
-			target_belt TEXT NOT NULL,
+			target_belt TEXT NOT NULL CHECK (target_belt IN ('白','黄','橙','绿','蓝','红','黑')),
 			coach TEXT NOT NULL,
-			result TEXT NOT NULL,
+			result TEXT NOT NULL CHECK (result IN ('通过','未通过')),
 			FOREIGN KEY (student_id) REFERENCES students(id)
 		);
 	`)
@@ -140,7 +140,7 @@ func GetAllStudents() ([]Student, error) {
 
 func GetRedBeltAndAbove() ([]Student, error) {
 	rows, err := db.Query(`SELECT id, nick, phone, belt, status FROM students 
-		WHERE belt IN ('红','黑') ORDER BY belt DESC, id DESC`)
+		WHERE belt IN ('红','黑') AND status = '在籍' ORDER BY belt DESC, id DESC`)
 	if err != nil {
 		return nil, err
 	}
